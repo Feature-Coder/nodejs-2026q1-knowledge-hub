@@ -1,11 +1,11 @@
 import { IsString, IsNotEmpty } from 'class-validator';
 
-export class CreateCategoryDto {
+export class UpdateUserPasswordDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  oldPassword: string;
 
   @IsString()
   @IsNotEmpty()
-  description: string;
+  newPassword: string;
 }

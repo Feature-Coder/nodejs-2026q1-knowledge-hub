@@ -1,1 +1,1 @@
-export class Article {}
+export class ArticleEntity {}

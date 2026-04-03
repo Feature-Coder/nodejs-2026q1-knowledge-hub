@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { User } from 'src/user/entities/user.entity';
-import { Article } from 'src/article/entities/article.entity';
-import { Category } from 'src/category/entities/category.entity';
-import { Comment } from 'src/comment/entities/comment.entity';
+import { UserEntity } from 'src/user/entities/user.entity';
+import { ArticleEntity } from 'src/article/entities/article.entity';
+import { CategoryEntity } from 'src/category/entities/category.entity';
+import { CommentEntity } from 'src/comment/entities/comment.entity';
 
 @Injectable()
 export class DatabaseService {
-  public users: User[] = [];
-  public articles: Article[] = [];
-  public categories: Category[] = [];
-  public comments: Comment[] = [];
+  public users: UserEntity[] = [];
+  public articles: ArticleEntity[] = [];
+  public categories: CategoryEntity[] = [];
+  public comments: CommentEntity[] = [];
 }

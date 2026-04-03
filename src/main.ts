@@ -5,10 +5,15 @@ import 'dotenv/config';
 import * as yaml from 'yaml';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api');
 
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
+  );
   const filePath = join(process.cwd(), 'doc', 'api.yaml');
   const file = readFileSync(filePath, 'utf8');
 

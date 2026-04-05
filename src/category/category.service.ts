@@ -1,26 +1,40 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { DatabaseService } from 'src/database/database.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CategoryEntity } from './entities/category.entity';
+import { BaseService } from 'src/common/base.service';
 
 @Injectable()
-export class CategoryService {
-  create(createCategoryDto: CreateCategoryDto) {
-    return 'This action adds a new category';
+export class CategoryService extends BaseService<CategoryEntity> {
+  constructor(db: DatabaseService) {
+    super(db, db.categories, 'Category');
   }
 
-  findAll() {
-    return `This action returns all category`;
+  create(dto: CreateCategoryDto): CategoryEntity {
+    const category = new CategoryEntity();
+    Object.assign(category, {
+      ...dto,
+      id: randomUUID(),
+    });
+    this.collection.push(category);
+    return category;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
+  update(id: string, dto: UpdateCategoryDto): CategoryEntity {
+    const category = this.findOne(id);
+    Object.assign(category, dto);
+    return category;
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
-  }
+  remove(id: string): void {
+    this.deleteFromCollection(id);
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+    this.db.articles.forEach((article) => {
+      if (article.categoryId === id) {
+        article.categoryId = null;
+      }
+    });
   }
 }

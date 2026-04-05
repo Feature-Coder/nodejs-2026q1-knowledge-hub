@@ -7,7 +7,14 @@ export class UserEntity {
 
   @Exclude()
   password: string;
-  role: UserRole;
+
+  role: UserRole = UserRole.VIEWER;
   createdAt: number;
   updatedAt: number;
+
+  constructor() {
+    const timestamp = Date.now();
+    this.createdAt = timestamp;
+    this.updatedAt = timestamp;
+  }
 }

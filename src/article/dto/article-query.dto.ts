@@ -7,8 +7,9 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ArticleStatus } from '../article.types';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
-export class ArticleQueryDto {
+export class ArticleQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(ArticleStatus)
   status?: ArticleStatus;

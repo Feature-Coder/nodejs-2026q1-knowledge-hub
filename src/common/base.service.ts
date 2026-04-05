@@ -1,6 +1,9 @@
 import { NotFoundException } from '@nestjs/common';
 import { MESSAGES } from 'src/common/messages';
 import { DatabaseService } from 'src/database/database.service';
+import type { PaginationQueryDto } from './dto/pagination-query.dto';
+import type { PaginatedResponse } from './pagination.types';
+import { applySortingAndPagination } from './collection.utils';
 
 export abstract class BaseService<T extends { id: string }> {
   constructor(
@@ -17,7 +20,10 @@ export abstract class BaseService<T extends { id: string }> {
     return this.collection.splice(index, 1)[0];
   }
 
-  findAll(): T[] {
+  findAll(query?: PaginationQueryDto): T[] | PaginatedResponse<T> {
+    if (query && Object.keys(query).length > 0) {
+      return applySortingAndPagination(this.collection, query);
+    }
     return this.collection;
   }
 

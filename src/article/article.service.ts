@@ -9,7 +9,9 @@ import { BaseService } from 'src/common/base.service';
 import {
   validateRelationOrThrow,
   removeRelatedItems,
+  applySortingAndPagination,
 } from 'src/common/collection.utils';
+import type { PaginatedResponse } from 'src/common/pagination.types';
 
 @Injectable()
 export class ArticleService extends BaseService<ArticleEntity> {
@@ -17,7 +19,9 @@ export class ArticleService extends BaseService<ArticleEntity> {
     super(db, db.articles, 'Article');
   }
 
-  override findAll(query: ArticleQueryDto = {}): ArticleEntity[] {
+  override findAll(
+    query: ArticleQueryDto = {},
+  ): ArticleEntity[] | PaginatedResponse<ArticleEntity> {
     const { status, categoryId, tag } = query;
     let articles = [...this.collection];
     if (status) {
@@ -29,7 +33,7 @@ export class ArticleService extends BaseService<ArticleEntity> {
     if (tag) {
       articles = articles.filter((a) => tag.every((t) => a.tags?.includes(t)));
     }
-    return articles;
+    return applySortingAndPagination(articles, query);
   }
 
   create(dto: CreateArticleDto): ArticleEntity {

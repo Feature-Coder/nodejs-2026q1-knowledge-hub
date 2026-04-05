@@ -27,3 +27,41 @@ export function removeRelatedItems<U>(
     }
   }
 }
+
+import type { PaginationQueryDto } from './dto/pagination-query.dto';
+import type { PaginatedResponse } from './pagination.types';
+
+export function applySortingAndPagination<T>(
+  data: T[],
+  query: PaginationQueryDto,
+): T[] | PaginatedResponse<T> {
+  const result = [...data];
+
+  // Apply sorting
+  if (query.sortBy) {
+    const orderCoef = query.order === 'desc' ? -1 : 1;
+    result.sort((a, b) => {
+      const valA = a[query.sortBy as keyof T];
+      const valB = b[query.sortBy as keyof T];
+
+      if (valA < valB) return -1 * orderCoef;
+      if (valA > valB) return 1 * orderCoef;
+      return 0;
+    });
+  }
+
+  // Apply pagination only if page and limit are provided
+  if (query.page !== undefined && query.limit !== undefined) {
+    const startIndex = (query.page - 1) * query.limit;
+    const endIndex = startIndex + query.limit;
+
+    return {
+      total: result.length,
+      page: query.page,
+      limit: query.limit,
+      data: result.slice(startIndex, endIndex),
+    };
+  }
+
+  return result;
+}

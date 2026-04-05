@@ -12,4 +12,10 @@ export class ArticleEntity {
 
   createdAt: number;
   updatedAt: number;
+
+  constructor() {
+    const timestamp = Date.now();
+    this.createdAt = timestamp;
+    this.updatedAt = timestamp;
+  }
 }

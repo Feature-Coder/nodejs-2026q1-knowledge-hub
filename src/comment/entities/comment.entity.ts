@@ -4,4 +4,8 @@ export class CommentEntity {
   createdAt: number;
   authorId: string | null;
   articleId: string;
+
+  constructor() {
+    this.createdAt = Date.now();
+  }
 }

@@ -1,5 +1,21 @@
 # Knowledge Hub
 
+## 🐳 Docker Hub Image
+
+Available at: [featurecoder/knowledge-hub](https://hub.docker.com/r/featurecoder/knowledge-hub)
+
+## 🚀 Running in Docker
+
+To start the application and database containerized:
+
+1.  Create a `.env` file based on `.env.example`.
+2.  Run the following command:
+    ```bash
+    docker-compose up --build
+    ```
+
+The application will be available at `http://localhost:4000`.
+
 ## Prerequisites
 
 - Git - [Download & Install Git](https://git-scm.com/downloads).

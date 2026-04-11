@@ -4,6 +4,7 @@ import { ArticleModule } from './article/article.module';
 import { CategoryModule } from './category/category.module';
 import { CommentModule } from './comment/comment.module';
 import { DatabaseModule } from './database/database.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -13,5 +14,6 @@ import { DatabaseModule } from './database/database.module';
     CommentModule,
     DatabaseModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

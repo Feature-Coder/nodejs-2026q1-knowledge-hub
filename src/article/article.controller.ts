@@ -21,31 +21,31 @@ export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
 
   @Get()
-  findAll(@Query() query: ArticleQueryDto) {
-    return this.articleService.findAll(query);
+  async findAll(@Query() query: ArticleQueryDto) {
+    return await this.articleService.findAll(query);
   }
 
   @Get(':id')
-  findOne(@Param('id', new UuidValidationPipe('Article')) id: string) {
-    return this.articleService.findOne(id);
+  async findOne(@Param('id', new UuidValidationPipe('Article')) id: string) {
+    return await this.articleService.findOne(id);
   }
 
   @Post()
-  create(@Body() createArticleDto: CreateArticleDto) {
-    return this.articleService.create(createArticleDto);
+  async create(@Body() createArticleDto: CreateArticleDto) {
+    return await this.articleService.create(createArticleDto);
   }
 
   @Put(':id')
-  update(
+  async update(
     @Param('id', new UuidValidationPipe('Article')) id: string,
     @Body() updateArticleDto: UpdateArticleDto,
   ) {
-    return this.articleService.update(id, updateArticleDto);
+    return await this.articleService.update(id, updateArticleDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', new UuidValidationPipe('Article')) id: string) {
-    return this.articleService.remove(id);
+  async remove(@Param('id', new UuidValidationPipe('Article')) id: string) {
+    return await this.articleService.remove(id);
   }
 }

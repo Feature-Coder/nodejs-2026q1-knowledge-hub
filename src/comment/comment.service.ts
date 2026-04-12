@@ -1,43 +1,73 @@
-import { Injectable } from '@nestjs/common';
-import { DatabaseService } from 'src/database/database.service';
-import { BaseService } from 'src/common/base.service';
-import { CommentEntity } from './entities/comment.entity';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { randomUUID } from 'crypto';
-import type { GetCommentDto } from './dto/get-comment.dto';
 import {
-  validateRelationOrThrow,
-  applySortingAndPagination,
-} from 'src/common/collection.utils';
-import type { PaginatedResponse } from 'src/common/pagination.types';
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { MESSAGES } from 'src/common/messages';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { GetCommentDto } from './dto/get-comment.dto';
+import { CommentEntity } from './entities/comment.entity';
 
 @Injectable()
-export class CommentService extends BaseService<CommentEntity> {
-  constructor(db: DatabaseService) {
-    super(db, db.comments, 'Comment');
+export class CommentService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findAllCommentsByArticleId(query: GetCommentDto) {
+    const { articleId, page, limit, sortBy, order } = query;
+    const orderBy = sortBy ? { [sortBy]: order || 'asc' } : undefined;
+    const where = { articleId };
+
+    if (page !== undefined && limit !== undefined) {
+      const skip = (page - 1) * limit;
+
+      const [total, comments] = await Promise.all([
+        this.prisma.comment.count({ where }),
+        this.prisma.comment.findMany({ skip, take: limit, orderBy, where }),
+      ]);
+
+      return {
+        total,
+        page,
+        limit,
+        data: comments.map((c) => new CommentEntity(c)),
+      };
+    }
+
+    const comments = await this.prisma.comment.findMany({ where, orderBy });
+    return comments.map((c) => new CommentEntity(c));
   }
 
-  findAllCommentsByArticleId(
-    query: GetCommentDto,
-  ): CommentEntity[] | PaginatedResponse<CommentEntity> {
-    const filtered = this.collection.filter(
-      (i) => i.articleId === query.articleId,
-    );
-    return applySortingAndPagination(filtered, query);
+  async findOne(id: string) {
+    const comment = await this.prisma.comment.findUnique({ where: { id } });
+    if (!comment) {
+      throw new NotFoundException(MESSAGES.NOT_FOUND('Comment'));
+    }
+    return new CommentEntity(comment);
   }
 
-  create(dto: CreateCommentDto): CommentEntity {
-    validateRelationOrThrow(this.db.articles, dto.articleId, 'Article');
-    const comment = new CommentEntity();
-    Object.assign(comment, {
-      ...dto,
-      id: randomUUID(),
+  async create(dto: CreateCommentDto) {
+    const articleExists = await this.prisma.article.findUnique({
+      where: { id: dto.articleId },
     });
-    this.collection.push(comment);
-    return comment;
+    if (!articleExists) {
+      throw new UnprocessableEntityException(
+        MESSAGES.RELATION_NOT_FOUND('Article'),
+      );
+    }
+
+    const comment = await this.prisma.comment.create({ data: dto });
+    return new CommentEntity(comment);
   }
 
-  remove(id: string): void {
-    this.deleteFromCollection(id);
+  async remove(id: string) {
+    const commentExists = await this.prisma.comment.findUnique({
+      where: { id },
+    });
+    if (!commentExists) {
+      throw new NotFoundException(MESSAGES.NOT_FOUND('Comment'));
+    }
+
+    await this.prisma.comment.delete({ where: { id } });
   }
 }

@@ -1,21 +1,24 @@
-import { ArticleStatus } from '../article.types';
+import { Transform } from 'class-transformer';
+import { Article, ArticleStatus } from '@prisma/client';
 
-export class ArticleEntity {
+export class ArticleEntity implements Article {
   id: string;
   title: string;
   content: string;
   status: ArticleStatus;
-  tags: string[];
 
   categoryId: string | null;
   authorId: string | null;
 
-  createdAt: number;
-  updatedAt: number;
+  tags: string[];
 
-  constructor() {
-    const timestamp = Date.now();
-    this.createdAt = timestamp;
-    this.updatedAt = timestamp;
+  @Transform(({ value }) => value?.getTime())
+  createdAt: Date;
+
+  @Transform(({ value }) => value?.getTime())
+  updatedAt: Date;
+
+  constructor(partial: Partial<ArticleEntity>) {
+    Object.assign(this, partial);
   }
 }

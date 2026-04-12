@@ -3,7 +3,8 @@ import { UserModule } from './user/user.module';
 import { ArticleModule } from './article/article.module';
 import { CategoryModule } from './category/category.module';
 import { CommentModule } from './comment/comment.module';
-import { DatabaseModule } from './database/database.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -11,7 +12,8 @@ import { DatabaseModule } from './database/database.module';
     ArticleModule,
     CategoryModule,
     CommentModule,
-    DatabaseModule,
+    PrismaModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

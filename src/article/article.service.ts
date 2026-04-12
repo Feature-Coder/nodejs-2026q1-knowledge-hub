@@ -1,74 +1,169 @@
-import { Injectable } from '@nestjs/common';
-import { DatabaseService } from 'src/database/database.service';
-import { ArticleEntity } from './entities/article.entity';
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { MESSAGES } from 'src/common/messages';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
-import { randomUUID } from 'crypto';
+import { ArticleEntity } from './entities/article.entity';
 import type { ArticleQueryDto } from './dto/article-query.dto';
-import { BaseService } from 'src/common/base.service';
-import {
-  validateRelationOrThrow,
-  removeRelatedItems,
-  applySortingAndPagination,
-} from 'src/common/collection.utils';
-import type { PaginatedResponse } from 'src/common/pagination.types';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
-export class ArticleService extends BaseService<ArticleEntity> {
-  constructor(db: DatabaseService) {
-    super(db, db.articles, 'Article');
+export class ArticleService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  private mapArticle(prismaArticle: any): ArticleEntity {
+    const { tags, ...rest } = prismaArticle;
+    return new ArticleEntity({
+      ...rest,
+      tags: tags?.map((t: any) => t.name) || [],
+    });
   }
 
-  override findAll(
-    query: ArticleQueryDto = {},
-  ): ArticleEntity[] | PaginatedResponse<ArticleEntity> {
-    const { status, categoryId, tag } = query;
-    let articles = [...this.collection];
-    if (status) {
-      articles = articles.filter((a) => a.status === status);
+  async findAll(query: ArticleQueryDto) {
+    const { status, categoryId, tag, page, limit, sortBy, order } = query;
+    const orderBy = sortBy ? { [sortBy]: order || 'asc' } : undefined;
+
+    const where: Prisma.ArticleWhereInput = {
+      ...(status && { status }),
+      ...(categoryId && { categoryId }),
+      ...(tag &&
+        tag.length > 0 && {
+          AND: tag.map((t) => ({ tags: { some: { name: t } } })),
+        }),
+    };
+
+    if (page !== undefined && limit !== undefined) {
+      const skip = (page - 1) * limit;
+
+      const [total, articles] = await Promise.all([
+        this.prisma.article.count({ where }),
+        this.prisma.article.findMany({
+          skip,
+          take: limit,
+          orderBy,
+          where,
+          include: { tags: true },
+        }),
+      ]);
+
+      return {
+        total,
+        page,
+        limit,
+        data: articles.map((a) => this.mapArticle(a)),
+      };
     }
-    if (categoryId) {
-      articles = articles.filter((a) => a.categoryId === categoryId);
-    }
-    if (tag) {
-      articles = articles.filter((a) => tag.every((t) => a.tags?.includes(t)));
-    }
-    return applySortingAndPagination(articles, query);
+
+    const articles = await this.prisma.article.findMany({
+      where,
+      orderBy,
+      include: { tags: true },
+    });
+    return articles.map((a) => this.mapArticle(a));
   }
 
-  create(dto: CreateArticleDto): ArticleEntity {
-    validateRelationOrThrow(this.db.users, dto.authorId, 'Author');
-    validateRelationOrThrow(this.db.categories, dto.categoryId, 'Category');
+  async findOne(id: string) {
+    const article = await this.prisma.article.findUnique({
+      where: { id },
+      include: { tags: true },
+    });
+    if (!article) {
+      throw new NotFoundException(MESSAGES.NOT_FOUND('Article'));
+    }
+    return this.mapArticle(article);
+  }
 
-    const article = new ArticleEntity();
-    Object.assign(article, {
-      ...dto,
-      id: randomUUID(),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+  async create(dto: CreateArticleDto) {
+    if (dto.authorId) {
+      const author = await this.prisma.user.findUnique({
+        where: { id: dto.authorId },
+      });
+      if (!author) {
+        throw new UnprocessableEntityException(
+          MESSAGES.RELATION_NOT_FOUND('Author'),
+        );
+      }
+    }
+    if (dto.categoryId) {
+      const category = await this.prisma.category.findUnique({
+        where: { id: dto.categoryId },
+      });
+      if (!category) {
+        throw new UnprocessableEntityException(
+          MESSAGES.RELATION_NOT_FOUND('Category'),
+        );
+      }
+    }
+
+    const { tags, ...data } = dto;
+
+    const article = await this.prisma.article.create({
+      data: {
+        ...data,
+        tags: tags
+          ? {
+              connectOrCreate: tags.map((name) => ({
+                where: { name },
+                create: { name },
+              })),
+            }
+          : undefined,
+      },
+      include: { tags: true },
     });
 
-    this.collection.push(article);
-    return article;
+    return this.mapArticle(article);
   }
 
-  update(id: string, dto: UpdateArticleDto): ArticleEntity {
-    const article = this.findOne(id);
-
-    if (dto.categoryId !== undefined) {
-      validateRelationOrThrow(this.db.categories, dto.categoryId, 'Category');
+  async update(id: string, dto: UpdateArticleDto) {
+    const existing = await this.prisma.article.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(MESSAGES.NOT_FOUND('Article'));
     }
 
-    Object.assign(article, {
-      ...dto,
-      updatedAt: Date.now(),
+    if (dto.categoryId) {
+      const category = await this.prisma.category.findUnique({
+        where: { id: dto.categoryId },
+      });
+      if (!category) {
+        throw new UnprocessableEntityException(
+          MESSAGES.RELATION_NOT_FOUND('Category'),
+        );
+      }
+    }
+
+    const { tags, ...data } = dto;
+
+    const article = await this.prisma.article.update({
+      where: { id },
+      data: {
+        ...data,
+        tags: tags
+          ? {
+              set: [],
+              connectOrCreate: tags.map((name) => ({
+                where: { name },
+                create: { name },
+              })),
+            }
+          : undefined,
+      },
+      include: { tags: true },
     });
 
-    return article;
+    return this.mapArticle(article);
   }
 
-  remove(id: string): void {
-    this.deleteFromCollection(id);
-    removeRelatedItems(this.db.comments, 'articleId', id);
+  async remove(id: string) {
+    const existing = await this.prisma.article.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(MESSAGES.NOT_FOUND('Article'));
+    }
+
+    await this.prisma.article.delete({ where: { id } });
   }
 }

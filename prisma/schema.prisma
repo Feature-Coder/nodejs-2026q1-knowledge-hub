@@ -53,6 +53,8 @@ model Tag {
   id       String    @id @default(uuid())
   name     String    @unique
   articles Article[]
+
+  @@index([name])
 }
 
 model Article {
@@ -71,6 +73,9 @@ model Article {
 
   tags     Tag[]
   comments Comment[]
+
+  @@index([status])
+  @@index([categoryId])
 }
 
 model Comment {

@@ -76,6 +76,16 @@ export class UserService {
       throw new NotFoundException(MESSAGES.NOT_FOUND('User'));
     }
 
-    await this.prisma.user.delete({ where: { id } });
+    // Advanced Scope: Prisma transactions for complex data operations
+    await this.prisma.$transaction(async (tx) => {
+      await tx.article.updateMany({
+        where: { authorId: id },
+        data: { authorId: null },
+      });
+      await tx.comment.deleteMany({
+        where: { authorId: id },
+      });
+      await tx.user.delete({ where: { id } });
+    });
   }
 }

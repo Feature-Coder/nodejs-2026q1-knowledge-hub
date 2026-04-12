@@ -14,7 +14,6 @@ import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { UuidValidationPipe } from 'src/common/uuid-validation.pipe';
-
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
 @Controller('category')
@@ -22,31 +21,31 @@ export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Get()
-  findAll(@Query() query: PaginationQueryDto) {
-    return this.categoryService.findAll(query);
+  async findAll(@Query() query: PaginationQueryDto) {
+    return await this.categoryService.findAll(query);
   }
 
   @Get(':id')
-  findOne(@Param('id', new UuidValidationPipe('Category')) id: string) {
-    return this.categoryService.findOne(id);
+  async findOne(@Param('id', new UuidValidationPipe('Category')) id: string) {
+    return await this.categoryService.findOne(id);
   }
 
   @Post()
-  create(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.categoryService.create(createCategoryDto);
+  async create(@Body() createCategoryDto: CreateCategoryDto) {
+    return await this.categoryService.create(createCategoryDto);
   }
 
   @Put(':id')
-  update(
+  async update(
     @Param('id', new UuidValidationPipe('Category')) id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ) {
-    return this.categoryService.update(id, updateCategoryDto);
+    return await this.categoryService.update(id, updateCategoryDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', new UuidValidationPipe('Category')) id: string) {
-    return this.categoryService.remove(id);
+  async remove(@Param('id', new UuidValidationPipe('Category')) id: string) {
+    return await this.categoryService.remove(id);
   }
 }

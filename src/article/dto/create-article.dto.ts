@@ -1,5 +1,5 @@
 import { IsArray, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
-import { ArticleStatus } from '../article.types';
+import { ArticleStatus } from '@prisma/client';
 
 export class CreateArticleDto {
   @IsString()

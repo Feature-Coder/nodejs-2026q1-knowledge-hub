@@ -6,7 +6,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { ArticleStatus } from '../article.types';
+import { ArticleStatus } from '@prisma/client';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
 export class ArticleQueryDto extends PaginationQueryDto {

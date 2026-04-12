@@ -1,11 +1,17 @@
-export class CommentEntity {
+import { Transform } from 'class-transformer';
+import { Comment } from '@prisma/client';
+
+export class CommentEntity implements Comment {
   id: string;
   content: string;
-  createdAt: number;
+
   authorId: string | null;
   articleId: string;
 
-  constructor() {
-    this.createdAt = Date.now();
+  @Transform(({ value }) => value?.getTime())
+  createdAt: Date;
+
+  constructor(partial: Partial<CommentEntity>) {
+    Object.assign(this, partial);
   }
 }

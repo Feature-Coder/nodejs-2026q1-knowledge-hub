@@ -5,6 +5,7 @@ import { CategoryModule } from './category/category.module';
 import { CommentModule } from './comment/comment.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AppController } from './app.controller';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AppController } from './app.controller';
     CategoryModule,
     CommentModule,
     PrismaModule,
+    AuthModule,
   ],
   controllers: [AppController],
 })
